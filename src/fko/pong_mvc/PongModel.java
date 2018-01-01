@@ -330,8 +330,8 @@ public class PongModel {
 	 */
 	private void newVector(DoubleProperty paddle) {
 
-		System.out.println("Old SpeedY: "+speedY.toString());
-		System.out.println("Old SpeedX: "+speedX.toString());
+//		System.out.println("Old SpeedY: "+speedY.toString());
+//		System.out.println("Old SpeedX: "+speedX.toString());
 
 		double paddleLength;
 		if (paddle.equals(leftPaddleY)) {
@@ -344,20 +344,20 @@ public class PongModel {
 		// center = 0.0, top=-1-0, bottom=+1.0
 		double hitPos = (ballCenterY.doubleValue() - paddle.doubleValue()) / paddleLength;
 		hitPos = 2.0 * (hitPos-0.5);
-		System.out.println("HitPos: "+hitPos);
+//		System.out.println("HitPos: "+hitPos);
 
 		double maxAngle = 60.0;
 		double newAngle = maxAngle * hitPos; // influence of the hit position
-		System.out.println(String.format("New Angle: %.2f",newAngle));
+//		System.out.println(String.format("New Angle: %.2f",newAngle));
 
 		// adapt speeds for constant total speed
 		speedY.set(BALL_MOVE_INCREMENTS * Math.tan(Math.toRadians(newAngle)));
-		System.out.println("New SpeedY: "+speedY.toString());
+//		System.out.println("New SpeedY: "+speedY.toString());
 		
 		speedX.set(speedX.get() * -1);// turn direction
-		System.out.println("New SpeedX (after neg): "+speedX.toString());
+//		System.out.println("New SpeedX (after neg): "+speedX.toString());
 		
-		System.out.println();
+//		System.out.println();
 		
 	}
 
