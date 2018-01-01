@@ -136,7 +136,7 @@ public class PongModel {
 		
 		// initial options
 		soundOnOption.set(false);
-		anglePaddleOption.set(false);
+		anglePaddleOption.set(true);
 		
 		// start the paddle movements
 		paddleMovementTimeline.setCycleCount(Timeline.INDEFINITE);
@@ -318,7 +318,7 @@ public class PongModel {
 	/**
 	 * Accelerate ball and paddles after each hit on paddle
 	 */
-	public void updateBallSpeedAfterPaddleHit() {
+	private void updateBallSpeedAfterPaddleHit() {
 		ballMovementTimeline.setRate(ballMovementTimeline.getRate()*ACCELARATION);
 		paddleMovementTimeline.setRate(paddleMovementTimeline.getRate()*ACCELARATION);
 	}
@@ -328,7 +328,7 @@ public class PongModel {
 	 * Is only used when option Angling Paddle is ON.
 	 * @param paddle
 	 */
-	public void newVector(DoubleProperty paddle) {
+	private void newVector(DoubleProperty paddle) {
 
 		System.out.println("Old SpeedY: "+speedY.toString());
 		System.out.println("Old SpeedX: "+speedX.toString());
@@ -343,29 +343,22 @@ public class PongModel {
 		// calculate where the ball hit the paddle
 		// center = 0.0, top=-1-0, bottom=+1.0
 		double hitPos = (ballCenterY.doubleValue() - paddle.doubleValue()) / paddleLength;
-		hitPos = (hitPos-0.5) * 2 * Math.signum(speedY.get());
+		hitPos = 2.0 * (hitPos-0.5);
 		System.out.println("HitPos: "+hitPos);
 
-		/*
-		 * This leads to either convergence to zero or convergence to bigger angles depending on 
-		 * the influence of the hitPos. 
-		 */
-
-		// determine new vector (angle and speed)
-		double speed = Math.sqrt(speedX.get()*speedX.get()+speedY.get()*speedY.get()); // Pythagoras c=speed
-		System.out.println("Old Speed: "+speed);
-		double angle = Math.atan(speedY.get()/Math.abs(speedX.get())); // current angle in RAD
-		System.out.println(String.format("Old Angle: %.2f ",Math.toDegrees(angle)));
-		double newAngle = angle * (1+(hitPos)); // influence of the hit position
-		System.out.println(String.format("New Angle: %.2f",Math.toDegrees(newAngle)));
+		double maxAngle = 60.0;
+		double newAngle = maxAngle * hitPos; // influence of the hit position
+		System.out.println(String.format("New Angle: %.2f",newAngle));
 
 		// adapt speeds for constant total speed
-		speedY.set(speed * Math.sin(newAngle));
+		speedY.set(BALL_MOVE_INCREMENTS * Math.tan(Math.toRadians(newAngle)));
 		System.out.println("New SpeedY: "+speedY.toString());
-		speedX.set(Math.signum(speedX.get()) * speed * Math.cos(newAngle));
+		
 		speedX.set(speedX.get() * -1);// turn direction
-		System.out.println("New SpeedX: "+speedX.toString());
+		System.out.println("New SpeedX (after neg): "+speedX.toString());
+		
 		System.out.println();
+		
 	}
 
 	/**
