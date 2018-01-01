@@ -40,10 +40,16 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
 /**
- * The PongPane view.
+ * The PongPlayfield view.
+ * 
+ * <p>
+ * This is a sub-component of the Pong View and therefore part of the MVC View.<br>
+ * 
+ * @see fko.pong_mvc.PongView
+ * 
  * @author Frank Kopp
  */
-public class PongPane extends Pane {
+public class PongPlayfield extends Pane {
 
 	private final PongModel model;
 	private final PongController controller;
@@ -61,12 +67,14 @@ public class PongPane extends Pane {
 	private StringProperty _optionsTextString = new SimpleStringProperty("Options: ");
 
 	/**
-	 * The pane where the playing takes place.
+	 * Creates a Playfield Pane to display the current state of the Pong model.
+	 * Also binds model data to view elements to update the view whenever the data changes. 
+	 * 
 	 * @param controller 
 	 * @param model 
 	 * @param view 
 	 */
-	public PongPane(PongModel model, PongController controller, PongView view) {
+	public PongPlayfield(PongModel model, PongController controller, PongView view) {
 		super();
 
 		this.model = model;
@@ -115,7 +123,6 @@ public class PongPane extends Pane {
 
 	/**
 	 * Adding the two player paddles to the screen.<br>
-	 * Also adding a mouse handler to the paddles.
 	 */
 	private void addPaddles() {
 
