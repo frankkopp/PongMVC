@@ -36,6 +36,15 @@ import javafx.scene.text.Text;
 
 /**
  * The Pong view.
+ * 
+ * <p> 
+ * The MVC View builds all necessary view elements and binds the the model data. It also directs the
+ * elements to send user inputs to the MVC Controller.<br>  
+ * The View knows the model so it can watch and update itself according to the model's state.<br>
+ * The View also knows the Controller to send user inputs (keyboard, mouse, etc.) to the controller.<br> 
+ * The View usually does not change the model (only reads it). It sends changes and user interactions to 
+ * the controller. 
+ * 
  * @author Frank Kopp
  */
 public class PongView {
@@ -47,6 +56,13 @@ public class PongView {
 	protected Text optionsText =  new Text("Options");
 
 	/**
+	 * Set up the Pong view.
+	 * 
+	 * <p>
+	 *  Creates a BorderPane and places various children<br>
+	 *  The Playfield, the how to text and the options display.<br>
+	 *  It also set the controller to handle inputs. 
+	 * 
 	 * @param model
 	 * @param controller
 	 */
@@ -61,7 +77,7 @@ public class PongView {
 				new BackgroundFill(Color.DARKGRAY, CornerRadii.EMPTY, Insets.EMPTY)));
 
 		// pong pane
-		PongPane pongpane = new PongPane(this.model , this.controller, this);
+		PongPlayfield pongpane = new PongPlayfield(this.model , this.controller, this);
 		view.setCenter(pongpane);
 
 		// add a two line hbox for how-to and options

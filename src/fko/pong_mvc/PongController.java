@@ -33,6 +33,13 @@ import javafx.stage.WindowEvent;
 
 /**
  * PongController
+ * 
+ * <p>
+ * A MVC controller for the Pong game handling all user input and forwarding it to the 
+ * MVC model. As per clean MVC the controller does not know the View. It is only called by View elements 
+ * when a user interacts with the View (Mouse, Keyboard, etc.). It the calls the model to let the model 
+ * change itself accordingly.   
+ * 
  * 31.12.2017
  * @author Frank Kopp
  */
@@ -44,90 +51,51 @@ public class PongController {
 	private double initialY;
 	private double _initialDragAnchor;
 
-	/**
-	 * @param model
-	 */
 	public PongController(PongModel model) {
 		this.model = model;
-
 	}
 
-	/**
-	 * 
-	 */
 	public void startGameAction() {
 		model.startGame();
 	}
 
-	/**
-	 * 
-	 */
 	public void stopGameAction() {
 		model.stopGame();
 	}
 
-	/**
-	 * 
-	 */
 	public void pauseGameAction() {
 		if (model.isGameRunning() && !model.isGamePaused()) model.pauseGame();
 		else if  (model.isGameRunning() && model.isGamePaused()) model.resumeGame();
 	}
 
-	/**
-	 * 
-	 */
 	public void soundOnOptionAction() {
 		model.setSoundOnOption(!model.getSoundOnOption());
 	}
 
-	/**
-	 * 
-	 */
 	public void anglePaddleOptionAction() {
 		model.setAnglePaddleOption(!model.getAnglePaddleOption());
 	}
 
-	/**
-	 * @param b 
-	 * 
-	 */
 	public void onLeftPaddleUpAction(boolean b) {
 		if (b) model.setLeftPaddleUp(true);
 		else model.setLeftPaddleUp(false);
 	}
 
-	/**
-	 * @param b 
-	 * 
-	 */
 	public void onLeftPaddleDownAction(boolean b) {
 		if (b) model.setLeftPaddleDown(true);
 		else model.setLeftPaddleDown(false);
 	}
 
-	/**
-	 * @param b 
-	 * 
-	 */
 	public void onRightPaddleUpAction(boolean b) {
 		if (b) model.setRightPaddleUp(true);
 		else model.setRightPaddleUp(false);
 	}
 
-	/**
-	 * @param b 
-	 * 
-	 */
 	public void onRightPaddleDownAction(boolean b) {
 		if (b) model.setRightPaddleDown(true);
 		else model.setRightPaddleDown(false);
 	}
 
-	/**
-	 * Handles keyboard pressed events
-	 * @param event
-	 */
 	public void handleKeyboardPressedEvents(KeyEvent event) {
 		switch (event.getCode()) {
 		// game control
@@ -146,10 +114,6 @@ public class PongController {
 		}
 	}
 
-	/**
-	 * Handles keyboard released events
-	 * @param event
-	 */
 	public void handleKeyboardReleasedEvents(KeyEvent event) {
 		switch (event.getCode()) {
 		case Q: 		onLeftPaddleUpAction(false); break;
@@ -160,26 +124,14 @@ public class PongController {
 		}
 	}
 
-	/**
-	 * Handles mouse  events
-	 * @param event
-	 */
 	public void handleMouseEventsLeftPaddle(MouseEvent event) {
 		handleMouseEvent(event, model.getLeftPaddleYProperty());
 	}
 
-	/**
-	 * Handles mouse  events
-	 * @param event
-	 */
 	public void handleMouseEventsRightPaddle(MouseEvent event) {
 		handleMouseEvent(event, model.getRightPaddleYProperty());
 	}
 
-	/**
-	 * @param event
-	 * @param paddle 
-	 */
 	private void handleMouseEvent(MouseEvent event, DoubleProperty paddleYProperty) {
 		final Rectangle source = (Rectangle) event.getSource();
 		final EventType<? extends MouseEvent> eventType = event.getEventType();
@@ -204,9 +156,6 @@ public class PongController {
 		}
 	}
 
-	/**
-	 * @param event
-	 */
 	public void close_action(WindowEvent event) {
 		Pong.exit();		
 	}

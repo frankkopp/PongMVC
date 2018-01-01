@@ -33,7 +33,20 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.util.Duration;
 
 /**
- * PongModel
+ * PongModel - represents a pong game holding all necessary information for any state of the game.
+ * 
+ * <p>
+ * A Pong game has two paddles and a ball. It has two walls (upwards and downwards) and two sides 
+ * (left and right). When started the ball moves from one side to the other while bouncing of the walls. 
+ * When a ball reaches the one of the sides the other side will receive a score. To avoid this the side 
+ * the balls flies towards will try to move the paddle in front of the ball so the ball bounces of the 
+ * paddle.<br>
+ * The balls is accelerated every time it hits a paddle to make the game faster until the next goal. Then 
+ * the speed is reset.<br>
+ * The ball bouncing of paddles may use different mechanics. The most simple one being just to change the 
+ * horizontal direction. Advanced mechanics allow the paddle to influence the direction of the ball as it
+ * bounces off.<br>
+ * 
  * 31.12.2017
  * @author Frank Kopp
  */
@@ -52,7 +65,7 @@ public class PongModel {
 
 	private static final double 	INITIAL_BALL_SPEED = 60.0;
 	private static final double 	INITIAL_PADDLE_SPEED = 60.0;
-	private static final double 	ACCELARATION = 1.05; // factor
+	private static final double 	ACCELARATION = 1.1; // factor
 
 	// sounds
 	private PongSounds sounds = new PongSounds();
@@ -61,17 +74,14 @@ public class PongModel {
 	private DoubleProperty playfieldWidth = new SimpleDoubleProperty(INITIAL_PLAYFIELD_WIDTH);
 	private DoubleProperty playfieldHeight = new SimpleDoubleProperty(INITIAL_PLAYFIELD_HEIGHT);
 
-	private DoubleProperty ballSize = new SimpleDoubleProperty(INITIAL_BALL_SIZE);
-	private DoubleProperty ballSpeed = new SimpleDoubleProperty(INITIAL_BALL_SPEED);
-
+	// speed of animations and stepping for each frame
 	private DoubleProperty speedX = new SimpleDoubleProperty(BALL_MOVE_INCREMENTS);
 	private DoubleProperty speedY = new SimpleDoubleProperty(BALL_MOVE_INCREMENTS);
 
-	private DoubleProperty paddleSpeed = new SimpleDoubleProperty(INITIAL_PADDLE_SPEED);
-
-	// The center points of the moving ball
+	// The center points and size of the moving ball
 	private DoubleProperty ballCenterX = new SimpleDoubleProperty();
 	private DoubleProperty ballCenterY = new SimpleDoubleProperty();
+	private DoubleProperty ballSize = new SimpleDoubleProperty(INITIAL_BALL_SIZE);
 
 	// The position of the paddles
 	private DoubleProperty leftPaddleLength = new SimpleDoubleProperty(INITIAL_PADDLE_LENGTH);
@@ -81,14 +91,15 @@ public class PongModel {
 	private DoubleProperty rightPaddleX = new SimpleDoubleProperty();
 	private DoubleProperty rightPaddleY = new SimpleDoubleProperty();
 
-	// points per player
-	private Player playerLeft = new Player("Left");
-	private Player playerRight = new Player("Right");
-
+	// the current actions applied to move paddles - is used in the paddleMovementTimeline
 	private BooleanProperty leftPaddleUp = new SimpleBooleanProperty(false);
 	private BooleanProperty leftPaddleDown = new SimpleBooleanProperty(false);
 	private BooleanProperty rightPaddleUp = new SimpleBooleanProperty(false);
 	private BooleanProperty rightPaddleDown = new SimpleBooleanProperty(false);
+	
+	// points per player
+	private Player playerLeft = new Player("Left");
+	private Player playerRight = new Player("Right");
 
 	// status of game
 	private BooleanProperty gamePaused = new SimpleBooleanProperty(false);
@@ -103,7 +114,7 @@ public class PongModel {
 	private Timeline paddleMovementTimeline = new Timeline();
 
 	/**
-	 * Holds all relevant information and does all relevant calculations for a Pong game.
+	 * Holds all relevant information for a pong game and does all relevant calculations.
 	 */
 	public PongModel() {
 		
@@ -125,19 +136,19 @@ public class PongModel {
 		
 		// initial options
 		soundOnOption.set(false);
-		anglePaddleOption.set(false);
+		anglePaddleOption.set(true);
 		
 		// start the paddle movements
 		paddleMovementTimeline.setCycleCount(Timeline.INDEFINITE);
 		KeyFrame movePaddle = 
-				new KeyFrame(Duration.seconds(1/paddleSpeed.get()), e -> { movePaddles();	});
+				new KeyFrame(Duration.seconds(1/INITIAL_PADDLE_SPEED), e -> { movePaddles();	});
 		paddleMovementTimeline.getKeyFrames().add(movePaddle);
 		paddleMovementTimeline.play();
 		
-		// prepare ball movements
+		// prepare ball movements (will be start in startGame())
 		ballMovementTimeline.setCycleCount(Timeline.INDEFINITE);
 		KeyFrame moveBall = 
-				new KeyFrame(Duration.seconds(1/ballSpeed.get()), e -> {	moveBall();	});
+				new KeyFrame(Duration.seconds(1/INITIAL_BALL_SPEED), e -> {	moveBall();	});
 		ballMovementTimeline.getKeyFrames().add(moveBall);
 		
 		// new players
@@ -148,18 +159,19 @@ public class PongModel {
 
 	/**
 	 * Starts the game with the ball from either of the two sides.
-	 * The side and start position is chosen randomly.
+	 * The side and start position of the ball is chosen randomly.
 	 */
 	public void startGame() {
 
 		// if game is running do nothing
 		if (gameRunning.get()) return;
 
-		// new players
+		// reset players / creating new players cuts the bindings from the view
+		// might need to re-think this
 		playerLeft.points.set(0);
 		playerRight.points.set(0);
 
-		// start from either side of the board
+		// choose randomly from which side to start
 		if (Math.random() < 0.5) {
 			ballCenterX.setValue(0.0+ballSize.get());	
 			speedX.set(BALL_MOVE_INCREMENTS);
@@ -167,14 +179,17 @@ public class PongModel {
 			ballCenterX.setValue(playfieldWidth.get()-ballSize.get());
 			speedX.set(-BALL_MOVE_INCREMENTS);
 		}
-		// random y
+		
+		// random height (y) to start from
 		ballCenterY.setValue(Math.random() * playfieldHeight.get());
-		// random direction
+		
+		// random direction to shoot the ball at the start
 		speedY.set(BALL_MOVE_INCREMENTS * (Math.random() < 0.5 ? 1 : -1));
 
 		// start the ball movements
 		ballMovementTimeline.play();
 
+		// game is now running
 		gamePaused.set(false);
 		gameRunning.set(true);
 
@@ -184,7 +199,8 @@ public class PongModel {
 	 * Stops the game. Ignored if game not running.
 	 */
 	public void stopGame() {
-		ballMovementTimeline.stop();
+		ballMovementTimeline.stop(); // stops ball movements
+		// game stopped
 		gamePaused.set(false);
 		gameRunning.set(false);
 	}
@@ -195,7 +211,7 @@ public class PongModel {
 	public void pauseGame() {
 		if (gameRunning.get() && gamePaused.get()) return;
 		gamePaused.set(true);
-		ballMovementTimeline.stop();
+		ballMovementTimeline.stop(); // stops ball movements
 	}
 
 	/**
@@ -204,11 +220,11 @@ public class PongModel {
 	public void resumeGame() {
 		if (gameRunning.get() && !gamePaused.get()) return;
 		gamePaused.set(false);
-		ballMovementTimeline.play();
+		ballMovementTimeline.play(); // (re-)starts ball movements
 	}
 
 	/**
-	 * Called by the Timeline animation event to move the paddles.
+	 * Called by the <code>paddleMovementTimeline<code> animation event to move the paddles.
 	 */
 	private void movePaddles() {
 		if (leftPaddleUp.get() 
@@ -230,7 +246,7 @@ public class PongModel {
 	}
 
 	/**
-	 * Called by the Timeline animation event to move the ball.
+	 * Called by the <code>ballMovementTimeline</code> animation event to move the ball.
 	 */
 	private void moveBall() {
 		ballCenterX.setValue(ballCenterX.getValue() + speedX.get());
@@ -240,7 +256,7 @@ public class PongModel {
 
 	/**
 	 * Checks if the ball has hit a wall, a paddle or has left through left or right wall.<br>
-	 * If left through left or right wall we have a goal and the score is increased and the ball resetted on the
+	 * If left through left or right wall we have a goal and the score is increased and the ball reseted on the
 	 * scorer's side.   
 	 */
 	private void checkCollision() {
@@ -300,22 +316,22 @@ public class PongModel {
 	}
 
 	/**
-	 * 
+	 * Accelerate ball and paddles after each hit on paddle
 	 */
-	public void updateBallSpeedAfterPaddleHit() {
-		ballSpeed.set(ballSpeed.get() * ACCELARATION);
-		paddleSpeed.set(paddleSpeed.get() * ACCELARATION);
+	private void updateBallSpeedAfterPaddleHit() {
 		ballMovementTimeline.setRate(ballMovementTimeline.getRate()*ACCELARATION);
 		paddleMovementTimeline.setRate(paddleMovementTimeline.getRate()*ACCELARATION);
 	}
 
 	/**
+	 * Calculate a new outgoing direction for a ball after hitting a paddle.<br>
+	 * Is only used when option Angling Paddle is ON.
 	 * @param paddle
 	 */
-	public void newVector(DoubleProperty paddle) {
+	private void newVector(DoubleProperty paddle) {
 
-		System.out.println("Old SpeedY: "+speedY.toString());
-		System.out.println("Old SpeedX: "+speedX.toString());
+//		System.out.println("Old SpeedY: "+speedY.toString());
+//		System.out.println("Old SpeedX: "+speedX.toString());
 
 		double paddleLength;
 		if (paddle.equals(leftPaddleY)) {
@@ -327,29 +343,22 @@ public class PongModel {
 		// calculate where the ball hit the paddle
 		// center = 0.0, top=-1-0, bottom=+1.0
 		double hitPos = (ballCenterY.doubleValue() - paddle.doubleValue()) / paddleLength;
-		hitPos = (hitPos-0.5) * 2 * Math.signum(speedY.get());
-		System.out.println("HitPos: "+hitPos);
+		hitPos = 2.0 * (hitPos-0.5);
+//		System.out.println("HitPos: "+hitPos);
 
-		/*
-		 * This leads to either convergence to zero or convergence to bigger angles depending on 
-		 * the influence of the hitPos. 
-		 */
-
-		// determine new vector (angle and speed)
-		double speed = Math.sqrt(speedX.get()*speedX.get()+speedY.get()*speedY.get()); // Pythagoras c=speed
-		System.out.println("Old Speed: "+speed);
-		double angle = Math.atan(speedY.get()/Math.abs(speedX.get())); // current angle in RAD
-		System.out.println(String.format("Old Angle: %.2f ",Math.toDegrees(angle)));
-		double newAngle = angle * (1+(hitPos)); // influence of the hit position
-		System.out.println(String.format("New Angle: %.2f",Math.toDegrees(newAngle)));
+		double maxAngle = 60.0;
+		double newAngle = maxAngle * hitPos; // influence of the hit position
+//		System.out.println(String.format("New Angle: %.2f",newAngle));
 
 		// adapt speeds for constant total speed
-		speedY.set(speed * Math.sin(newAngle));
-		System.out.println("New SpeedY: "+speedY.toString());
-		speedX.set(Math.signum(speedX.get()) * speed * Math.cos(newAngle));
+		speedY.set(BALL_MOVE_INCREMENTS * Math.tan(Math.toRadians(newAngle)));
+//		System.out.println("New SpeedY: "+speedY.toString());
+		
 		speedX.set(speedX.get() * -1);// turn direction
-		System.out.println("New SpeedX: "+speedX.toString());
-		System.out.println();
+//		System.out.println("New SpeedX (after neg): "+speedX.toString());
+		
+//		System.out.println();
+		
 	}
 
 	/**
@@ -361,8 +370,6 @@ public class PongModel {
 		ballMovementTimeline.pause();
 
 		// reset speed
-		ballSpeed.set(ballSpeed.get() * INITIAL_BALL_SPEED);
-		paddleSpeed.set(paddleSpeed.get() * INITIAL_PADDLE_SPEED);
 		ballMovementTimeline.setRate(1.0);
 		paddleMovementTimeline.setRate(1.0);
 
@@ -391,6 +398,9 @@ public class PongModel {
 
 	/* ************************************************************
 	 * GETTER / SETTER
+	 * 
+	 * This is really ugly in Java - but to correctly isolate 
+	 * inner workings of classes from other classes necessary.  
 	 * ************************************************************/
 
 	/**
@@ -401,140 +411,98 @@ public class PongModel {
 	}
 
 	/**
-	 * @return the playfield
+	 * @return the playfield width
 	 */
 	public double getPlayfieldWidth() {
 		return playfieldWidth.get();
 	}
 
 	/**
-	 * @param playfield the playfield to set
+	 * @param value the playfield width to set
 	 */
 	public void setPlayfieldWidth(double value) {
 		this.playfieldWidth.set(value);
 	}
 
 	/**
-	 * @return the playfield width property
+	 * @return the playfield height property
 	 */
 	public DoubleProperty getPlayfieldHeightProperty() {
 		return playfieldHeight;
 	}
 
 	/**
-	 * @return the playfield
+	 * @return the playfield height
 	 */
 	public double getPlayfieldHeight() {
 		return playfieldHeight.get();
 	}
 
 	/**
-	 * @param playfield the playfield to set
+	 * @param value the playfield height to set
 	 */
 	public void setPlayfieldHeight(double value) {
 		this.playfieldHeight.set(value);
 	}
 
 	/**
-	 * @return the ballSpeed property
-	 */
-	public DoubleProperty getBallSpeedProperty() {
-		return ballSpeed;
-	}
-
-	/**
-	 * @return the ballSpeed
-	 */
-	public double getBallSpeed() {
-		return ballSpeed.get();
-	}
-
-	/**
-	 * @param ballSpeed the ballSpeed to set
-	 */
-	public void setBallSpeed(double ballSpeed) {
-		this.ballSpeed.set(ballSpeed);
-	}
-
-	/**
-	 * @return the ballSpeed property
+	 * @return the ball size property
 	 */
 	public DoubleProperty getBallSizeProperty() {
 		return ballSize;
 	}
 
 	/**
-	 * @return the ballSpeed
+	 * @return the ball size
 	 */
 	public double getBallSize() {
 		return ballSize.get();
 	}
 
 	/**
-	 * @param ballSpeed the ballSpeed to set
+	 * @param ballSize the ball size to set
 	 */
 	public void setBallSize(double ballSize) {
 		this.ballSize.set(ballSize);
 	}
 
 	/**
-	 * @return paddle speed property
-	 */
-	public DoubleProperty getPaddleSpeedProperty() {
-		return paddleSpeed;
-	}
-
-	/**
-	 * @return the paddleSpeed
-	 */
-	public double getPaddleSpeed() {
-		return paddleSpeed.get();
-	}
-
-	/**
-	 * @param paddleSpeed the paddleSpeed to set
-	 */
-	public void setPaddleSpeed(double paddleSpeed) {
-		this.paddleSpeed.set(paddleSpeed);
-	}
-
-	/**
-	 * @return paddle speed Y property
+	 * @return the ball's speed in horizontal direction property
 	 */
 	public DoubleProperty getSpeedXProperty() {
 		return speedX;
 	}
 
 	/**
-	 * @return the speedX
+	 * @return the ball's speed in horizontal direction
 	 */
 	public double getSpeedX() {
 		return speedX.get();
 	}
 
 	/**
-	 * @param speedX the speedX to set
+	 * @param speedX the ball's speed in horizontal direction to set
 	 */
 	public void setSpeedX(double speedX) {
 		this.speedX.set(speedX);
 	}
 
 	/**
-	 * @return paddle speed Y property
+	 * @return the ball's speed in vertical direction property
 	 */
 	public DoubleProperty getSpeedYProperty() {
 		return speedY;
 	}
 
 	/**
-	 * @return the speedY
+	 * @return the ball's speed in vertical direction
 	 */
 	public double getSpeedY() {
 		return speedY.get();
 	}
 
 	/**
-	 * @param speedY the speedY to set
+	 * @param speedY the ball's speed in vertical direction to set
 	 */
 	public void setSpeedY(double speedY) {
 		this.speedY.set(speedY);
@@ -555,175 +523,179 @@ public class PongModel {
 	}
 
 	/**
-	 * @param left paddle length
+	 * @param value left paddle length
 	 */
 	public void setLeftPaddleLength(double value) {
 		this.leftPaddleLength.set(value);
 	}
 
 	/**
-	 * @return paddle size property
+	 * @return right paddle length property
 	 */
 	public DoubleProperty getRightPaddleLengthProperty() {
 		return rightPaddleLength;
 	}
 
 	/**
-	 * @return the paddleSize
+	 * @return right paddle length
 	 */
 	public double getRightPaddleLength() {
 		return rightPaddleLength.get();
 	}
 
 	/**
-	 * @param paddleSize the paddleSize to set
+	 * @param value left paddle length to set
 	 */
-	public void setRightPaddleLength(double paddleSize) {
-		this.rightPaddleLength.set(paddleSize);
+	public void setRightPaddleLength(double value) {
+		this.rightPaddleLength.set(value);
 	}
 
 	/**
-	 * @return leftPaddleUpProperty
+	 * @return property for when movement upwards is currently triggered by user input
 	 */
 	public BooleanProperty isLeftPaddleUpProperty() {
 		return leftPaddleUp;
 	}
 
 	/**
-	 * @return the leftPaddleUp
+	 * @return true if movement upwards is currently triggered by user input
 	 */
 	public boolean isLeftPaddleUp() {
 		return leftPaddleUp.get();
 	}
 
 	/**
-	 * @param leftPaddleUp the leftPaddleUp to set
+	 * @param leftPaddleUp set true when upwards movement is 
+	 * currently triggered by user input - false otherwise
 	 */
 	public void setLeftPaddleUp(boolean leftPaddleUp) {
 		this.leftPaddleUp.set(leftPaddleUp);
 	}
 
 	/**
-	 * @return leftPaddleDownProperty
+	 * @return property for when movement downwards is currently triggered by user input
 	 */
 	public BooleanProperty isLeftPaddleDownProperty() {
 		return leftPaddleDown;
 	}
 
 	/**
-	 * @return the leftPaddleDown
+	 * @return true if movement downwards is currently triggered by user input
 	 */
 	public boolean isLeftPaddleDown() {
 		return leftPaddleDown.get();
 	}
 
 	/**
-	 * @param leftPaddleDown the leftPaddleDown to set
+	 * @param leftPaddleDown set true when downwards movement is 
+	 * currently triggered by user input - false otherwise
 	 */
 	public void setLeftPaddleDown(boolean leftPaddleDown) {
 		this.leftPaddleDown.set(leftPaddleDown);
 	}
 
 	/**
-	 * @return rightPaddleUpProperty
+	 * @return property for when movement upwards is currently triggered by user input
 	 */
 	public BooleanProperty isRightPaddleUpProperty() {
 		return rightPaddleUp;
 	}
 
 	/**
-	 * @return the rightPaddleUp
+	 * @return true if movement upwards is currently triggered by user input
 	 */
 	public boolean isRightPaddleUp() {
 		return rightPaddleUp.get();
 	}
 
 	/**
-	 * @param rightPaddleUp the rightPaddleUp to set
+	 * @param @param rightPaddleUp set true when upwards movement is 
+	 * currently triggered by user input - false otherwise
 	 */
 	public void setRightPaddleUp(boolean rightPaddleUp) {
 		this.rightPaddleUp.set(rightPaddleUp);
 	}
 
 	/**
-	 * @return rightPaddleDownProperty
+	 * @return property for when movement downwards is currently triggered by user input
 	 */
 	public BooleanProperty isRightPaddleDownProperty() {
 		return rightPaddleDown;
 	}
 
 	/**
-	 * @return the rightPaddleDown
+	 * @return true if movement downwards is currently triggered by user input
 	 */
 	public boolean isRightPaddleDown() {
 		return rightPaddleDown.get();
 	}
 
 	/**
-	 * @param rightPaddleDown the rightPaddleDown to set
+	 * @param rightPaddleDown set true when downwards movement is 
+	 * currently triggered by user input - false otherwise
 	 */
 	public void setRightPaddleDown(boolean rightPaddleDown) {
 		this.rightPaddleDown.set(rightPaddleDown);
 	}
 
 	/**
-	 * @return ball center Y property
+	 * @return ball's center vertical position property
 	 */
 	public DoubleProperty getBallCenterYProperty() {
 		return ballCenterY;
 	}
 
 	/**
-	 * @return the ballCenterY
+	 * @return the ball's center vertical position
 	 */
 	public double getBallCenterY() {
 		return ballCenterY.get();
 	}
 
 	/**
-	 * @param ballCenterY the ballCenterY to set
+	 * @param ballCenterY the ball's center vertical position to set
 	 */
 	public void setBallCenterY(double ballCenterY) {
 		this.ballCenterY.set(ballCenterY);
 	}
 
 	/**
-	 * @return ball center X property
+	 * @return ball's center horizontal position property
 	 */
 	public DoubleProperty getBallCenterXProperty() {
 		return ballCenterX;
 	}
 
 	/**
-	 * @return the ballCenterX
+	 * @return ball's center horizontal position 
 	 */
 	public double getBallCenterX() {
 		return ballCenterX.get();
 	}
 
 	/**
-	 * @param ballCenterX the ballCenterx to set
+	 * @param ballCenterX ball's center horizontal position to set
 	 */
 	public void setBallCenterX(double ballCenterX) {
 		this.ballCenterY.set(ballCenterX);
 	}
 
 	/**
-	 * @return the leftPaddleY property
+	 * @return the left paddle's vertical position (left upper corner) property
 	 */
 	public DoubleProperty getLeftPaddleYProperty() {
 		return leftPaddleY;
 	}
 
 	/**
-	 * @return the leftPaddleY 
+	 * @return the left paddle's vertical position (left upper corner) 
 	 */
 	public double getLeftPaddleY() {
 		return leftPaddleY.get();
 	}
 
 	/**
-	 * @param leftPaddleY the leftPaddleY to set
+	 * @param leftPaddleY the left paddle's vertical position (left upper corner) to set
 	 */
 	public void setLeftPaddleY(double leftPaddleY) {
 		if (leftPaddleY < 0) {
@@ -735,42 +707,42 @@ public class PongModel {
 	}
 
 	/**
-	 * @return the leftPaddleY property
+	 * @return the left paddle's horizontal position (left upper corner) property
 	 */
 	public DoubleProperty getLeftPaddleXProperty() {
 		return leftPaddleX;
 	}
 
 	/**
-	 * @return the leftPaddleY 
+	 * @return the left paddle's horizontal position (left upper corner)
 	 */
 	public double getLeftPaddleX() {
 		return leftPaddleX.get();
 	}
 
 	/**
-	 * @param leftPaddleY the leftPaddleY to set
+	 * @param leftPaddleY the left paddle's horizontal position (left upper corner) to set
 	 */
 	public void setLeftPaddleX(double leftPaddleY) {
 		this.leftPaddleX.set(leftPaddleY);
 	}
 
 	/**
-	 * @return the rightPaddleY property
+	 * @return the right paddle's vertical position (left upper corner) property
 	 */
 	public DoubleProperty getRightPaddleYProperty() {
 		return rightPaddleY;
 	}
 
 	/**
-	 * @return the rightPaddleY
+	 * @return the right paddle's vertical position (left upper corner)
 	 */
 	public double getRightPaddleY() {
 		return rightPaddleY.get();
 	}
 
 	/**
-	 * @param rightPaddleY the rightPaddleY to set
+	 * @param rightPaddleY the right paddle's vertical position (left upper corner) to set
 	 */
 	public void setRightPaddleY(double rightPaddleY) {
 		if (rightPaddleY < 0) {
@@ -782,94 +754,80 @@ public class PongModel {
 	}
 
 	/**
-	 * @return the rightPaddleY property
+	 * @return the right paddle's horizontal position (left upper corner) property
 	 */
 	public DoubleProperty getRightPaddleXProperty() {
 		return rightPaddleX;
 	}
 
 	/**
-	 * @return the rightPaddleY
+	 * @return the right paddle's horizontal position (left upper corner)
 	 */
 	public double getRightPaddleX() {
 		return rightPaddleX.get();
 	}
 
 	/**
-	 * @param rightPaddleY the rightPaddleY to set
+	 * @param rightPaddleY the right paddle's horizontal position (left upper corner) to set
 	 */
 	public void setRightPaddleX(double rightPaddleY) {
 		this.rightPaddleX.set(rightPaddleY);
 	}
 
 	/**
-	 * @return the playerLeft
+	 * @return the left player
 	 */
 	public Player getPlayerLeft() {
 		return playerLeft;
 	}
 
 	/**
-	 * @param playerLeft the playerLeft to set
+	 * @param playerLeft the left player to set
 	 */
 	public void setPlayerLeft(Player playerLeft) {
 		this.playerLeft = playerLeft;
 	}
 
 	/**
-	 * @return the playerRight
+	 * @return the right player
 	 */
 	public Player getPlayerRight() {
 		return playerRight;
 	}
 
 	/**
-	 * @param playerRight the playerRight to set
+	 * @param playerRight the playeright player to set
 	 */
 	public void setPlayerRight(Player playerRight) {
 		this.playerRight = playerRight;
 	}
 
 	/**
-	 * @return the gamePaused property
+	 * @return the game paused property
 	 */
 	public BooleanProperty isGamePausedProperty() {
 		return gamePaused;
 	}
 
 	/**
-	 * @return the gamePaused
+	 * @return true if game is running and is paused
 	 */
 	public boolean isGamePaused() {
 		return gamePaused.get();
 	}
 
 	/**
-	 * @param gamePaused the gamePaused to set
-	 */
-	public void setGamePaused(boolean gamePaused) {
-		this.gamePaused.set(gamePaused);
-	}
-
-	/**
-	 * @return the gameRunning property
+	 * @return the game running property
 	 */
 	public BooleanProperty isGameRunningProperty() {
 		return gameRunning;
 	}
 
 	/**
-	 * @return the gameRunning
+	 * @return true if game is running
 	 */
 	public boolean isGameRunning() {
 		return gameRunning.get();
-	}
-
-	/**
-	 * @param gameRunning the gameRunning to set
-	 */
-	public void setGameRunning(boolean gameRunning) {
-		this.gameRunning.set(gameRunning);
 	}
 
 	/**
@@ -915,7 +873,7 @@ public class PongModel {
 	}
 
 	/**
-	 * @return
+	 * @return the width of both of the paddles
 	 */
 	public double getPaddleWidth() {
 		return INITIAL_PADDLE_WIDTH;
