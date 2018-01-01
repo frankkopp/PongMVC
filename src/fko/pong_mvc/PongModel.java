@@ -65,7 +65,7 @@ public class PongModel {
 
 	private static final double 	INITIAL_BALL_SPEED = 60.0;
 	private static final double 	INITIAL_PADDLE_SPEED = 60.0;
-	private static final double 	ACCELARATION = 1.05; // factor
+	private static final double 	ACCELARATION = 1.1; // factor
 
 	// sounds
 	private PongSounds sounds = new PongSounds();
@@ -75,10 +75,8 @@ public class PongModel {
 	private DoubleProperty playfieldHeight = new SimpleDoubleProperty(INITIAL_PLAYFIELD_HEIGHT);
 
 	// speed of animations and stepping for each frame
-	private DoubleProperty ballSpeed = new SimpleDoubleProperty(INITIAL_BALL_SPEED);
 	private DoubleProperty speedX = new SimpleDoubleProperty(BALL_MOVE_INCREMENTS);
 	private DoubleProperty speedY = new SimpleDoubleProperty(BALL_MOVE_INCREMENTS);
-	private DoubleProperty paddleSpeed = new SimpleDoubleProperty(INITIAL_PADDLE_SPEED);
 
 	// The center points and size of the moving ball
 	private DoubleProperty ballCenterX = new SimpleDoubleProperty();
@@ -143,14 +141,14 @@ public class PongModel {
 		// start the paddle movements
 		paddleMovementTimeline.setCycleCount(Timeline.INDEFINITE);
 		KeyFrame movePaddle = 
-				new KeyFrame(Duration.seconds(1/paddleSpeed.get()), e -> { movePaddles();	});
+				new KeyFrame(Duration.seconds(1/INITIAL_PADDLE_SPEED), e -> { movePaddles();	});
 		paddleMovementTimeline.getKeyFrames().add(movePaddle);
 		paddleMovementTimeline.play();
 		
 		// prepare ball movements (will be start in startGame())
 		ballMovementTimeline.setCycleCount(Timeline.INDEFINITE);
 		KeyFrame moveBall = 
-				new KeyFrame(Duration.seconds(1/ballSpeed.get()), e -> {	moveBall();	});
+				new KeyFrame(Duration.seconds(1/INITIAL_BALL_SPEED), e -> {	moveBall();	});
 		ballMovementTimeline.getKeyFrames().add(moveBall);
 		
 		// new players
@@ -321,8 +319,6 @@ public class PongModel {
 	 * Accelerate ball and paddles after each hit on paddle
 	 */
 	public void updateBallSpeedAfterPaddleHit() {
-		ballSpeed.set(ballSpeed.get() * ACCELARATION);
-		paddleSpeed.set(paddleSpeed.get() * ACCELARATION);
 		ballMovementTimeline.setRate(ballMovementTimeline.getRate()*ACCELARATION);
 		paddleMovementTimeline.setRate(paddleMovementTimeline.getRate()*ACCELARATION);
 	}
@@ -381,8 +377,6 @@ public class PongModel {
 		ballMovementTimeline.pause();
 
 		// reset speed
-		ballSpeed.set(ballSpeed.get() * INITIAL_BALL_SPEED);
-		paddleSpeed.set(paddleSpeed.get() * INITIAL_PADDLE_SPEED);
 		ballMovementTimeline.setRate(1.0);
 		paddleMovementTimeline.setRate(1.0);
 
@@ -459,27 +453,6 @@ public class PongModel {
 	}
 
 	/**
-	 * @return the ball speed property
-	 */
-	public DoubleProperty getBallSpeedProperty() {
-		return ballSpeed;
-	}
-
-	/**
-	 * @return the ball speed
-	 */
-	public double getBallSpeed() {
-		return ballSpeed.get();
-	}
-
-	/**
-	 * @param ballSpeed the ball speed to set
-	 */
-	public void setBallSpeed(double ballSpeed) {
-		this.ballSpeed.set(ballSpeed);
-	}
-
-	/**
 	 * @return the ball size property
 	 */
 	public DoubleProperty getBallSizeProperty() {
@@ -498,27 +471,6 @@ public class PongModel {
 	 */
 	public void setBallSize(double ballSize) {
 		this.ballSize.set(ballSize);
-	}
-
-	/**
-	 * @return paddle speed property
-	 */
-	public DoubleProperty getPaddleSpeedProperty() {
-		return paddleSpeed;
-	}
-
-	/**
-	 * @return the paddle speed
-	 */
-	public double getPaddleSpeed() {
-		return paddleSpeed.get();
-	}
-
-	/**
-	 * @param paddle speed the paddle speed to set
-	 */
-	public void setPaddleSpeed(double paddleSpeed) {
-		this.paddleSpeed.set(paddleSpeed);
 	}
 
 	/**
