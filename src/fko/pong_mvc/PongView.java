@@ -94,15 +94,6 @@ public class PongView {
 
 		view.setBottom(vBox);
 		BorderPane.setAlignment(vBox, Pos.CENTER);
-
-		System.out.println(String.format("PLAYFIELD (pref): width: %f height: %f",pongpane.getPrefWidth(), pongpane.getPrefHeight()));
-		System.out.println(String.format("PLAYFIELD (get): width: %f height: %f",pongpane.getWidth(), pongpane.getHeight()));
-		System.out.println(String.format("vBox (pref): width: %f height: %f",vBox.getPrefWidth(), vBox.getPrefHeight()));
-		System.out.println(String.format("vBox (get): width: %f height: %f",vBox.getWidth(), vBox.getHeight()));
-		System.out.println(String.format("PANE (pref): width: %f height: %f",view.getPrefWidth(), view.getPrefHeight()));
-		System.out.println(String.format("PANE (get): width: %f height: %f",view.getWidth(), view.getHeight()));
-
-		
 	}
 
 	/**
