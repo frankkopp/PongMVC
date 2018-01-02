@@ -59,6 +59,8 @@ public class PongModel {
 
 	private static final double 	PADDLE_MOVE_STEPS = 2.0;
 	private static final double 	BALL_MOVE_INCREMENTS = 2.0;
+	private static final double 	BALL_SPEED = Math.sqrt(2 * BALL_MOVE_INCREMENTS * BALL_MOVE_INCREMENTS);
+	private static final double 	MAX_ANGLE_DEGREE = 60.0;
 
 	private static final double 	INITIAL_BALL_SIZE = 5.0;
 	private static final double 	INITIAL_PADDLE_LENGTH = 60.0;
@@ -251,8 +253,8 @@ public class PongModel {
 	 * Called by the <code>ballMovementTimeline</code> animation event to move the ball.
 	 */
 	private void moveBall() {
-		ballCenterX.setValue(ballCenterX.getValue() + speedX.get());
-		ballCenterY.setValue(ballCenterY.getValue() + speedY.get());
+		ballCenterX.setValue(ballCenterX.get() + speedX.get());
+		ballCenterY.setValue(ballCenterY.get() + speedY.get());
 		checkCollision();
 	}
 
@@ -282,7 +284,7 @@ public class PongModel {
 
 		// hit on a paddle - left
 		if (speedX.get() < 0 // moving left
-				&& (ballCenterX.get()-ballSize.get()) == (leftPaddleX.get()+INITIAL_PADDLE_WIDTH) 
+				&& (ballCenterX.get()-ballSize.get()) <= (leftPaddleX.get()+INITIAL_PADDLE_WIDTH) 
 				&& (ballCenterY.get()+ballSize.get() > leftPaddleY.get())
 				&& (ballCenterY.get()-ballSize.get() < leftPaddleY.get()+leftPaddleLength.get())) {
 
@@ -299,7 +301,7 @@ public class PongModel {
 			}
 		} // hit on a paddle - right
 		else if (speedX.get() > 0 // moving right
-				&& (ballCenterX.get()+ballSize.get()) == (rightPaddleX.get()) 
+				&& (ballCenterX.get()+ballSize.get()) >= (rightPaddleX.get()) 
 				&& (ballCenterY.get()+ballSize.get() > rightPaddleY.get())
 				&& (ballCenterY.get()-ballSize.get() < rightPaddleY.get()+leftPaddleLength.get())) {
 
@@ -332,35 +334,34 @@ public class PongModel {
 	 */
 	private void newVector(DoubleProperty paddle) {
 
-//		System.out.println("Old SpeedY: "+speedY.toString());
-//		System.out.println("Old SpeedX: "+speedX.toString());
+		double hitPos = calculateHitPos(paddle);
+		double newAngleRAD = Math.toRadians(MAX_ANGLE_DEGREE * hitPos); // influence of the hit position
 
+		// adapt speeds for constant total speed
+		speedY.set(BALL_SPEED * Math.sin(newAngleRAD)); // new Y speed
+		speedX.set(-Math.signum(speedX.get()) // turn direction
+				* Math.abs(BALL_SPEED * Math.cos(newAngleRAD))); // new X speed
+		
+	}
+
+	/**
+	 * @param paddleY
+	 * @return
+	 */
+	private double calculateHitPos(DoubleProperty paddleY) {
+		
 		double paddleLength;
-		if (paddle.equals(leftPaddleY)) {
+		if (paddleY.equals(leftPaddleY)) {
 			paddleLength = leftPaddleLength.get();
 		} else {
 			paddleLength = rightPaddleLength.get();
 		}
-
+		
 		// calculate where the ball hit the paddle
 		// center = 0.0, top=-1-0, bottom=+1.0
-		double hitPos = (ballCenterY.doubleValue() - paddle.doubleValue()) / paddleLength;
-		hitPos = 2.0 * (hitPos-0.5);
-//		System.out.println("HitPos: "+hitPos);
-
-		double maxAngle = 60.0;
-		double newAngle = maxAngle * hitPos; // influence of the hit position
-//		System.out.println(String.format("New Angle: %.2f",newAngle));
-
-		// adapt speeds for constant total speed
-		speedY.set(BALL_MOVE_INCREMENTS * Math.tan(Math.toRadians(newAngle)));
-//		System.out.println("New SpeedY: "+speedY.toString());
+		double hitPos = 2.0 * (((ballCenterY.doubleValue() - paddleY.doubleValue()) / paddleLength) - 0.5);
 		
-		speedX.set(speedX.get() * -1);// turn direction
-//		System.out.println("New SpeedX (after neg): "+speedX.toString());
-		
-//		System.out.println();
-		
+		return hitPos;
 	}
 
 	/**
@@ -385,8 +386,10 @@ public class PongModel {
 			speedX.set(-BALL_MOVE_INCREMENTS);
 			playerRight.points.set(playerRight.points.get()+1);
 		}
+		
 		// random y
 		ballCenterY.setValue(Math.random() * playfieldHeight.get());
+		
 		// random direction
 		speedY.set(BALL_MOVE_INCREMENTS * (Math.random() < 0.5 ? 1 : -1));
 
