@@ -125,14 +125,14 @@ public class PongController {
 	}
 
 	public void handleMouseEventsLeftPaddle(MouseEvent event) {
-		handleMouseEvent(event, model.getLeftPaddleYProperty());
+		handlePaddleMouseEvent(event, model.getLeftPaddleYProperty());
 	}
 
 	public void handleMouseEventsRightPaddle(MouseEvent event) {
-		handleMouseEvent(event, model.getRightPaddleYProperty());
+		handlePaddleMouseEvent(event, model.getRightPaddleYProperty());
 	}
 
-	private void handleMouseEvent(MouseEvent event, DoubleProperty paddleYProperty) {
+	private void handlePaddleMouseEvent(MouseEvent event, DoubleProperty paddleYProperty) {
 		final Rectangle source = (Rectangle) event.getSource();
 		final EventType<? extends MouseEvent> eventType = event.getEventType();
 
@@ -145,7 +145,6 @@ public class PongController {
 		} else if (eventType.equals(MouseEvent.MOUSE_DRAGGED) ) {
 			double dragY = event.getSceneY() - _initialDragAnchor;
 			// don't leave area
-			//System.out.println("InitialY: "+initialY+" DRAG: "+dragY);	
 			if (paddleYProperty.equals(model.getLeftPaddleYProperty())) {
 				model.setLeftPaddleY(initialY + dragY);
 			} else {

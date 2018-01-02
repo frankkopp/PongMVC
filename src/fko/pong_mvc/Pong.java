@@ -55,27 +55,22 @@ public class Pong extends Application {
 		PongController controller = new PongController(model);
 		PongView view = new PongView(model, controller);
 
-		// FIX: how to set correct height so that middle pane gets it preferred size
-		Scene scene = new Scene(view.asParent(),600,432); 
+		Scene scene = new Scene(view.asParent());
 
+		// let the view register its keyboard handler (can only be done after the scene has been set
+		view.addInputHandler();
+		
 		// setup primary stage
 		primaryStage.setTitle("Pong by Frank Kopp (c)");
 		primaryStage.setResizable(false);
-//		primaryStage.setMinWidth(600);
-//		primaryStage.setMinHeight(454);
-//		primaryStage.setMaxWidth(600);
-//		primaryStage.setMaxHeight(454);
-
+		primaryStage.sizeToScene();
 		primaryStage.setScene(scene);
 		
 		// closeAction - close through close action
-		scene.getWindow().setOnCloseRequest(event -> {
+		primaryStage.setOnCloseRequest(event -> {
 			controller.close_action(event);
 			event.consume();
 		});
-		
-		// let the view register the keyboard handler
-		view.addInputHandler();
 		
 		primaryStage.show();
 	}

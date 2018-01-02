@@ -45,6 +45,8 @@ import javafx.scene.text.Text;
  * The View usually does not change the model (only reads it). It sends changes and user interactions to 
  * the controller. 
  * 
+ * TODO: make the view re-sizable - bind different scaling parameters to view size
+ * 
  * @author Frank Kopp
  */
 public class PongView {
