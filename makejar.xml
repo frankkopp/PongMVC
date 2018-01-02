@@ -7,7 +7,7 @@
     <property name="dir.workspace" value="${dir.buildfile}/.."/>
     <property name="dir.jarfile" value="${dir.buildfile}/release"/>
     <target name="create_run_jar">
-        <jar destfile="${dir.jarfile}/PongMVC_1.2.jar">
+        <jar destfile="${dir.jarfile}/PongMVC_1.3.jar">
             <manifest>
                 <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
                 <attribute name="Rsrc-Main-Class" value="fko.pong_mvc.Pong"/>
