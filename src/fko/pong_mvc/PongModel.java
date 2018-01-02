@@ -38,7 +38,7 @@ import javafx.util.Duration;
  * <p>
  * A Pong game has two paddles and a ball. It has two walls (upwards and downwards) and two sides 
  * (left and right). When started the ball moves from one side to the other while bouncing of the walls. 
- * When a ball reaches the one of the sides the other side will receive a score. To avoid this the side 
+ * When a ball reaches one of the sides the other side will receive a score. To avoid this the side 
  * the balls flies towards will try to move the paddle in front of the ball so the ball bounces of the 
  * paddle.<br>
  * The balls is accelerated every time it hits a paddle to make the game faster until the next goal. Then 
@@ -46,6 +46,8 @@ import javafx.util.Duration;
  * The ball bouncing of paddles may use different mechanics. The most simple one being just to change the 
  * horizontal direction. Advanced mechanics allow the paddle to influence the direction of the ball as it
  * bounces off.<br>
+ * 
+ * TODO: constant speed of ball after paddle bouncing
  * 
  * 31.12.2017
  * @author Frank Kopp

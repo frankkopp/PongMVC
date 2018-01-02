@@ -45,6 +45,8 @@ import javafx.scene.text.Text;
  * The View usually does not change the model (only reads it). It sends changes and user interactions to 
  * the controller. 
  * 
+ * TODO: make the view re-sizable - bind different scaling parameters to view size
+ * 
  * @author Frank Kopp
  */
 public class PongView {
@@ -92,6 +94,15 @@ public class PongView {
 
 		view.setBottom(vBox);
 		BorderPane.setAlignment(vBox, Pos.CENTER);
+
+		System.out.println(String.format("PLAYFIELD (pref): width: %f height: %f",pongpane.getPrefWidth(), pongpane.getPrefHeight()));
+		System.out.println(String.format("PLAYFIELD (get): width: %f height: %f",pongpane.getWidth(), pongpane.getHeight()));
+		System.out.println(String.format("vBox (pref): width: %f height: %f",vBox.getPrefWidth(), vBox.getPrefHeight()));
+		System.out.println(String.format("vBox (get): width: %f height: %f",vBox.getWidth(), vBox.getHeight()));
+		System.out.println(String.format("PANE (pref): width: %f height: %f",view.getPrefWidth(), view.getPrefHeight()));
+		System.out.println(String.format("PANE (get): width: %f height: %f",view.getWidth(), view.getHeight()));
+
+		
 	}
 
 	/**

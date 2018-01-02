@@ -80,12 +80,13 @@ public class PongPlayfield extends Pane {
 		this.model = model;
 		this.controller = controller;
 		this.view = view;
-
+		
 		this.setBackground(new Background(
 				new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
 
-		this.prefHeightProperty().bind(model.getPlayfieldWidthProperty());
-		this.prefWidthProperty().bind(model.getPlayfieldHeightProperty());
+		// set the size of the pane according to the models playfield sizes
+		this.prefWidthProperty().bind(model.getPlayfieldWidthProperty());
+		this.prefHeightProperty().bind(model.getPlayfieldHeightProperty());
 		
 		// observe model values
 		model.getSoundOnOptionProperty().addListener((obs, oldX, newX) -> updateOptions());
